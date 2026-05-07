@@ -7,3 +7,11 @@ requires-python = ">=3.14"
 dependencies = [
     "pydantic>=2.13.3",
 ]
+
+[project.optional-dependencies]
+notebook = [
+    "ipython>=8",
+]
+
+[project.entry-points."silco.plugins"]
+ipython = "silco.plugins.ipython"
