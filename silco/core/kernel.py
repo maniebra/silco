@@ -9,14 +9,16 @@ from importlib import metadata
 from types import ModuleType
 from typing import Any, Literal
 
-PluginCategory = Literal["shapes", "renderers", "layouts", "presenters"]
+PluginCategory = Literal["shapes", "renderers", "layouts", "presenters", "styles"]
 PluginType = PluginCategory
-PLUGIN_CATEGORIES: tuple[PluginCategory, ...] = ("shapes", "renderers", "layouts", "presenters")
+PLUGIN_CATEGORIES: tuple[PluginCategory, ...] = ("shapes", "renderers", "layouts", "presenters", "styles")
 _CATEGORY_ALIASES = {
     "shape": "shapes",
     "shapes": "shapes",
     "renderer": "renderers",
     "renderers": "renderers",
+    "style": "styles",
+    "styles": "styles",
     "layout": "layouts",
     "layouts": "layouts",
     "presenter": "presenters",

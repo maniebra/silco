@@ -1,4 +1,5 @@
 import unittest
+from types import SimpleNamespace
 
 from silco import Diagram, diagram
 
@@ -22,7 +23,7 @@ class CoreTest(unittest.TestCase):
         self.assertIn("Orders DB", svg)
         self.assertIn("HTTPS", svg)
 
-    def test_mermaid_renderer_includes_groups_and_edges(self) -> None:
+    def test_svg_renderer_includes_groups_and_edges(self) -> None:
         d = (
             diagram("Inventory")
             .node("api", "API", kind="service", group="app")
@@ -30,11 +31,11 @@ class CoreTest(unittest.TestCase):
             .connect("api", "cache", protocol="RESP")
         )
 
-        mermaid = d.to_mermaid()
+        svg = d.to_svg()
 
-        self.assertTrue(mermaid.startswith("flowchart LR"))
-        self.assertIn('subgraph app["app"]', mermaid)
-        self.assertIn("api -->|RESP| cache", mermaid)
+        self.assertIn('class="silco-group"', svg)
+        self.assertIn(">app<", svg)
+        self.assertIn(">RESP<", svg)
 
     def test_unknown_edge_endpoint_fails(self) -> None:
         d = diagram().node("api")
@@ -58,9 +59,36 @@ class PluginRegistryTest(unittest.TestCase):
         discovered = kernel.discover(namespace="silco.plugins")
 
         self.assertIn("ipython", kernel.names("presenters"))
+        self.assertIn("pdf", kernel.names("renderers"))
         self.assertTrue(
             any(plugin.name == "ipython" for plugin in discovered) or "ipython" in kernel.names("presenters")
         )
+
+    def test_pdf_plugin_renders_with_optional_backend(self) -> None:
+        import sys
+
+        from silco.plugins import pdf
+
+        calls = {}
+
+        def svg2pdf(*, bytestring: bytes, write_to: str | None = None) -> bytes:
+            calls["svg"] = bytestring
+            calls["write_to"] = write_to
+            return b"%PDF-1.7\n"
+
+        original = sys.modules.get("cairosvg")
+        sys.modules["cairosvg"] = SimpleNamespace(svg2pdf=svg2pdf)
+        try:
+            result = pdf.pdf_renderer(diagram("PDF").node("api", "API"))
+        finally:
+            if original is None:
+                sys.modules.pop("cairosvg", None)
+            else:
+                sys.modules["cairosvg"] = original
+
+        self.assertEqual(b"%PDF-1.7\n", result)
+        self.assertIn(b"<svg", calls["svg"])
+        self.assertIsNone(calls["write_to"])
 
 
 if __name__ == "__main__":

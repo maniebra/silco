@@ -12,6 +12,10 @@ dependencies = [
 notebook = [
     "ipython>=8",
 ]
+pdf = [
+    "cairosvg>=2.7",
+]
 
 [project.entry-points."silco.plugins"]
 ipython = "silco.plugins.ipython"
+pdf = "silco.plugins.pdf"

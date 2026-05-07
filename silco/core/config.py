@@ -15,5 +15,6 @@ class RenderConfig(BaseModel):
     rank_gap: int = Field(default=120, ge=40)
     node_gap: int = Field(default=48, ge=20)
     margin: int = Field(default=32, ge=0)
+    style: str = Field(default="modern", min_length=1)
     font_family: str = "ui-sans-serif, Segoe UI, sans-serif"
     title: bool = True

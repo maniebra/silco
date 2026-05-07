@@ -1,7 +1,7 @@
 # SILCO (**S**ystem **I**llustration & **L**ayout **Co**mposer)
 
 Silco is a tiny Python-first system design diagram generator. Build a diagram as code,
-render it as inline SVG, export Mermaid text, or display it directly in IPython/Jupyter.
+render it as inline SVG with the built-in core graphics backend, or display it directly in IPython/Jupyter.
 
 ```python
 from silco import diagram
@@ -16,7 +16,6 @@ d = (
 )
 
 svg = d.to_svg()
-mermaid = d.to_mermaid()
 ```
 
 In IPython/Jupyter:
@@ -24,6 +23,17 @@ In IPython/Jupyter:
 ```python
 %load_ext silco.plugins.ipython
 d
+```
+
+Export as PDF with the optional CairoSVG-backed plugin:
+
+```bash
+pip install "silco[pdf]"
+```
+
+```python
+d.save_pdf("checkout.pdf")
+pdf_bytes = d.to_pdf()
 ```
 
 Plugins are categorized as `shapes`, `renderers`, `layouts`, and `presenters`.
