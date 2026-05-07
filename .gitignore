@@ -1,0 +1,11 @@
+# pycache files
+**/*.py{o,c}
+**/__pycache__/
+
+# Dev. related stuff
+.dev/
+
+# IDE Files
+.idea/
+.vs/
+.vscode/
