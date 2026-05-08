@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from silco.core.config import RenderConfig
-from silco.core.renderers.graphics import Element
+from silco.core.renderers.base.config import RenderConfig
+from silco.core.renderers.base.graphics import Element
 from silco.core.kernel import SilcoKernel, kernel
 from silco.core.renderers.style import SvgStyle
 

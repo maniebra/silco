@@ -43,6 +43,27 @@ class CoreTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unknown target node"):
             d.connect("api", "missing")
 
+    def test_svg_renderer_supports_styles(self) -> None:
+        d = (
+            diagram("Styled")
+            .node("api", "API", kind="service", group="app")
+            .node("db", "DB", kind="database", group="data")
+            .connect("api", "db", protocol="JDBC")
+        )
+
+        default_svg = d.to_svg(style="modern")
+        uml_svg = d.to_svg(style="uml")
+
+        self.assertNotEqual(default_svg, uml_svg)
+        self.assertIn("modern-arrow", default_svg)
+        self.assertIn("uml-arrow", uml_svg)
+
+    def test_unknown_style_fails_fast(self) -> None:
+        d = diagram().node("api")
+
+        with self.assertRaisesRegex(ValueError, "Unknown SVG style"):
+            d.to_svg(style="does-not-exist")
+
 class PluginRegistryTest(unittest.TestCase):
     def test_plugins_are_categorized_with_metadata(self) -> None:
         from silco.core import kernel

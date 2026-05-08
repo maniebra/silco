@@ -2,6 +2,9 @@
 **/*.py{o,c}
 **/__pycache__/
 
+# demo files
+.ipynb_checkpoints/
+
 # Dev. related stuff
 .dev/
 
@@ -9,3 +12,8 @@
 .idea/
 .vs/
 .vscode/
+
+# VirtEnv
+.venv/
+.env/
+venv/

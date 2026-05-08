@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from silco.core.renderers.diagram import Diagram, Node
+from silco.core.renderers.base.diagram import Diagram, Node
 from silco.core.kernel import SilcoKernel, kernel
 
 PLUGIN_CATEGORY = "renderers"

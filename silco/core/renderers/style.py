@@ -4,8 +4,8 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Any
 
-from silco.core.config import RenderConfig
-from silco.core.renderers.graphics import Canvas, Element
+from silco.core.renderers.base.config import RenderConfig
+from silco.core.renderers.base.graphics import Canvas, Element
 
 NodeRenderer = Callable[[Any, float, RenderConfig], Element]
 EdgeRenderer = Callable[[Any, Any, float, RenderConfig], Element]

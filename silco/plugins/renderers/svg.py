@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from silco.core.kernel import SilcoKernel, kernel
-from silco.core.renderers.svg import svg_renderer as render_svg
+from silco.core.renderers.exporter.svg import svg_renderer as render_svg
 
 PLUGIN_CATEGORY = "renderers"
 PLUGIN_NAME = "svg"
