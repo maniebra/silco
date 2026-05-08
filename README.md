@@ -18,6 +18,16 @@ d = (
 svg = d.to_svg()
 ```
 
+Choose an SVG style and pass layout/rendering options directly:
+
+```python
+# Built-in style options: "modern" and "uml"
+svg = d.to_svg(style="uml", direction="LR", title=True)
+```
+
+If you want consistent rendering even before style plugins are discovered, the
+default `"modern"` style is available as a fallback.
+
 In IPython/Jupyter:
 
 ```python

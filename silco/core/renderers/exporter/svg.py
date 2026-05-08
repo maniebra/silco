@@ -161,7 +161,9 @@ def _resolve_style(config: RenderConfig) -> SvgStyle:
     try:
         from silco.plugins.renderers import styles as _styles  # noqa: F401
         del _styles
-    except Exception:
+    except ImportError:
+        if config.style != "modern":
+            raise ValueError(f"Unknown SVG style: {config.style!r}. Available styles: legacy (modern)")
         return _FALLBACK_STYLE
 
     if config.style == "modern" and config.style not in kernel.names("styles"):

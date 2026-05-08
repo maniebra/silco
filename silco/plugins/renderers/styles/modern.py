@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from functools import lru_cache
+from pathlib import Path
+from xml.etree import ElementTree as ET
 
 from silco.core.renderers.base.config import RenderConfig
 from silco.core.renderers.base.graphics import Element
@@ -12,6 +15,9 @@ PLUGIN_NAME = "modern"
 PLUGIN_DESCRIPTION = "Modern rounded-card style with soft depth and gradients."
 PLUGIN_TAGS = ("builtin", "style", "svg")
 
+_TEMPLATES_DIR = Path(__file__).resolve().parents[3] / "templates" / "shapes"
+_TEMPLATE_KINDS = {"actor", "component", "database", "queue", "cache", "storage", "external"}
+
 
 def _stylesheet(config: RenderConfig) -> str:
     return f"""
@@ -19,7 +25,7 @@ def _stylesheet(config: RenderConfig) -> str:
 .silco-title {{ font: 700 22px {config.font_family}; fill: #0f172a; }}
 .silco-node {{ fill: #ffffff; stroke: #334155; stroke-width: 1.5; filter: drop-shadow(0 8px 14px rgb(15 23 42 / .12)); }}
 .silco-label {{ font: 600 13px {config.font_family}; fill: #0f172a; text-anchor: middle; dominant-baseline: middle; }}
-.silco-kind {{ font: 600 10px {config.font_family}; fill: #334155; text-anchor: middle; text-transform: uppercase; }}
+.silco-kind {{ font: 600 10px {config.font_family}; fill: #334155; text-anchor: middle; dominant-baseline: middle; text-transform: uppercase; }}
 .silco-edge {{ stroke: #334155; stroke-width: 1.7; fill: none; marker-end: url(#modern-arrow); }}
 .silco-edge-label {{ font: 600 11px {config.font_family}; fill: #334155; text-anchor: middle; paint-order: stroke; stroke: #f8fafc; stroke-width: 5; }}
 .silco-group {{ fill: url(#modern-package); stroke: #0284c7; stroke-width: 1.2; }}
@@ -104,16 +110,29 @@ def _node(item, y_offset: float, config: RenderConfig) -> Element:
             "rx": 12,
         },
     )
-    kind = Element("text", {"class": "silco-kind", "x": x + item.width / 2, "y": y + 18}, text=node.kind)
-    label = Element("text", {"class": "silco-label", "x": x + item.width / 2, "y": y + 40}, text=node.display_label)
+    kind = Element(
+        "text",
+        {"class": "silco-kind", "x": x + item.width / 2, "y": y + item.height * 0.28},
+        text=node.kind,
+    )
+    label = Element(
+        "text",
+        {"class": "silco-label", "x": x + item.width / 2, "y": y + item.height / 2},
+        text=node.display_label,
+    )
     icon = _node_icon(node.kind, x, y, item.width, item.height)
-    children = [body, kind, label]
+    children = [body]
     if icon is not None:
         children.append(icon)
+    children += (kind, label)
     return Element("g", children=tuple(children))
 
 
 def _node_icon(kind: str, x: float, y: float, width: float, height: float) -> Element | None:
+    template = _shape_template(kind, x, y, width, height)
+    if template is not None:
+        return template
+
     if kind == "actor":
         center = x + width / 2
         return Element(
@@ -125,19 +144,6 @@ def _node_icon(kind: str, x: float, y: float, width: float, height: float) -> El
                 "y2": y + 34,
                 "stroke": "#334155",
                 "stroke-width": "1.8",
-            },
-        )
-    if kind == "database":
-        return Element(
-            "ellipse",
-            {
-                "cx": x + width / 2,
-                "cy": y + height - 10,
-                "rx": max((width - 28) / 2, 6),
-                "ry": 6,
-                "fill": "#dbeafe",
-                "stroke": "#334155",
-                "stroke-width": "1.2",
             },
         )
     if kind == "queue":
@@ -171,7 +177,163 @@ def _node_icon(kind: str, x: float, y: float, width: float, height: float) -> El
                 "stroke-dasharray": "4 4",
             },
         )
+    if kind == "database":
+        rx = max((width - 24) / 2, 8)
+        top = y + 26
+        body_top = y + 26
+        body_bottom = body_top + max(height - 38, 20)
+        bottom = body_top + max(height - 38, 20)
+        mid = bottom - 6
+        center_x = x + width / 2
+        body_height = body_bottom - body_top
+        return Element(
+            "g",
+            children=(
+                Element(
+                    "rect",
+                    {
+                        "x": x + 12,
+                        "y": body_top,
+                        "width": width - 24,
+                        "height": max(body_height, 20),
+                        "rx": 2,
+                        "fill": "#dbeafe",
+                        "stroke": "#334155",
+                        "stroke-width": "1.25",
+                    },
+                ),
+                Element(
+                    "ellipse",
+                    {
+                        "cx": center_x,
+                        "cy": top,
+                        "rx": rx,
+                        "ry": 8,
+                        "fill": "none",
+                        "stroke": "#334155",
+                        "stroke-width": "1.25",
+                    },
+                ),
+                Element(
+                    "ellipse",
+                    {
+                        "cx": center_x,
+                        "cy": bottom,
+                        "rx": rx,
+                        "ry": 8,
+                        "fill": "#dbeafe",
+                        "stroke": "#334155",
+                        "stroke-width": "1.25",
+                    },
+                ),
+                Element(
+                    "ellipse",
+                    {
+                        "cx": center_x,
+                        "cy": mid,
+                        "rx": rx,
+                        "ry": 8,
+                        "fill": "none",
+                        "stroke": "#334155",
+                        "stroke-width": "1.0",
+                        "stroke-dasharray": "4 3",
+                    },
+                ),
+            ),
+        )
     return None
+
+
+def _shape_template(kind: str, x: float, y: float, width: float, height: float) -> Element | None:
+    if kind not in _TEMPLATE_KINDS:
+        return None
+
+    svg_root = _load_svg_root(kind)
+    if svg_root is None:
+        return None
+
+    template_width, template_height = _template_size(svg_root)
+    if template_width == 0 or template_height == 0:
+        return None
+
+    children = tuple(_convert_svg_node(child) for child in list(svg_root))
+    if not children:
+        return None
+    scale_x = width / template_width
+    scale_y = height / template_height
+    if scale_x == 1.0 and scale_y == 1.0:
+        return Element("g", {"transform": f"translate({x:.1f} {y:.1f})"}, children=children)
+
+    scale = min(scale_x, scale_y)
+    sx = (width - template_width * scale) / 2
+    sy = (height - template_height * scale) / 2
+    if sx == 0.0 and sy == 0.0:
+        transform = f"scale({scale:.4f} {scale:.4f})"
+    else:
+        transform = f"translate({sx:.4f} {sy:.4f}) scale({scale:.4f} {scale:.4f})"
+    content = Element("g", {"transform": transform}, children=children)
+    return Element("g", {"transform": f"translate({x:.1f} {y:.1f})"}, children=(content,))
+
+
+@lru_cache(maxsize=32)
+def _load_svg_root(kind: str) -> ET.Element | None:
+    paths = (
+        _TEMPLATES_DIR / f"{kind}.svg",
+        Path.cwd() / "templates" / "shapes" / f"{kind}.svg",
+    )
+    for path in paths:
+        if not path.exists():
+            continue
+        try:
+            return ET.parse(path).getroot()
+        except ET.ParseError:
+            return None
+    return None
+
+
+def _template_size(root: ET.Element) -> tuple[float, float]:
+    width = _to_float(root.get("width"), 160.0)
+    height = _to_float(root.get("height"), 72.0)
+    if width > 0 and height > 0:
+        return width, height
+
+    view_box = root.get("viewBox")
+    if view_box:
+        values = _parse_view_box(view_box)
+        if values:
+            return values
+    return 160.0, 72.0
+
+
+def _to_float(value: str | None, default: float) -> float:
+    try:
+        return float(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+
+
+def _parse_view_box(view_box: str) -> tuple[float, float] | None:
+    parts = view_box.strip().split()
+    if len(parts) != 4:
+        return None
+    try:
+        _, _, width, height = map(float, parts)
+    except ValueError:
+        return None
+    return width, height
+
+
+def _convert_svg_node(node: ET.Element) -> Element:
+    children = tuple(_convert_svg_node(child) for child in list(node))
+    text = node.text.strip() if node.text and node.text.strip() else None
+    tag = _svg_tag(node.tag)
+    return Element(tag, dict(node.attrib), text=text, children=children)
+
+
+def _svg_tag(tag: str) -> str:
+    if "}" in tag:
+        return tag.split("}", 1)[1]
+    return tag
 
 
 def _edge(edge, layout, y_offset: float, config: RenderConfig) -> Element:

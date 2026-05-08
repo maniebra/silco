@@ -52,11 +52,12 @@ def grid_layout(diagram: Diagram, **options: Any) -> Layout:
     config = RenderConfig(direction=diagram.direction, **options)
     count = max(len(diagram.nodes), 1)
     columns = max(1, ceil(sqrt(count)))
+    row_gap = config.node_gap * 1.5
     positions: dict[str, PositionedNode] = {}
     for idx, node in enumerate(diagram.nodes.values()):
         row, col = divmod(idx, columns)
         x = config.margin + col * (config.node_width + config.node_gap)
-        y = config.margin + row * (config.node_height + config.node_gap)
+        y = config.margin + row * (config.node_height + row_gap)
         positions[node.id] = PositionedNode(
             node=node,
             x=float(x),
