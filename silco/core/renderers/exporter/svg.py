@@ -1,181 +1,30 @@
-
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-from collections.abc import Iterable
+from typing import Any
 
 from silco.core.kernel import kernel
-from silco.core.models.edge import Edge
-from silco.core.renderers.base.diagram import Diagram, group_bounds
 from silco.core.renderers.base.config import RenderConfig
-from silco.core.renderers.base.graphics import Canvas, Element
-from silco.core.renderers.base.positioned_node import PositionedNode
-from silco.core.renderers.style import SvgStyle
-
-if TYPE_CHECKING:
-    from silco.core.renderers.base.layout import Layout
+from silco.core.renderers.base.diagram import Diagram
+from silco.core.renderers.diagrams_backend import DiagramStyle, render_svg
 
 
 def svg_renderer(diagram: Diagram, **options: Any) -> str:
-    config = RenderConfig(direction=diagram.direction, **{k: v for k, v in options.items() if k in RenderConfig.model_fields})
-    layout_name = options.get("layout", "dag")
-    layout = diagram.layout(layout_name, **{k: v for k, v in options.items() if k in RenderConfig.model_fields})
-    title_height = 44 if diagram.title and config.title else 0
-    height = layout.height + title_height
-    canvas = _svg_canvas(layout.width, height)
+    render_options = {name: value for name, value in options.items() if name in RenderConfig.model_fields}
+    config = RenderConfig(direction=diagram.direction, **render_options)
     style = _resolve_style(config)
-    style.configure_canvas(canvas, layout.width, height, config)
-    if diagram.title and config.title:
-        canvas.text(diagram.title, 32, 30, class_="silco-title")
-
-    for group in style.render_group(diagram, layout, title_height, config):
-        canvas.add(group)
-    for edge in diagram.edges:
-        canvas.add(style.render_edge(edge, layout, title_height, config))
-    for item in layout.nodes.values():
-        canvas.add(style.render_node(item, title_height, config))
-    return canvas.to_svg()
+    return render_svg(diagram, config, style)
 
 
-def _svg_canvas(width: float, height: float) -> Canvas:
-    canvas = Canvas(width, height, {"role": "img"})
-    return canvas
+def _resolve_style(config: RenderConfig) -> DiagramStyle:
+    from silco.plugins.renderers import styles as _styles  # noqa: F401
 
-
-def _legacy_stylesheet(config: RenderConfig) -> str:
-    return f"""
-.silco-bg {{ fill: #f8fafc; }}
-.silco-title {{ font: 700 22px {config.font_family}; fill: #0f172a; }}
-.silco-node {{ fill: #ffffff; stroke: #334155; stroke-width: 1.5; filter: url(#nodeShadow); }}
-.silco-node-shell {{ fill: #ffffff; stroke: #334155; stroke-width: 1.5; }}
-.silco-label {{ font: 600 13px {config.font_family}; fill: #0f172a; text-anchor: middle; dominant-baseline: middle; letter-spacing: 0.02em; }}
-.silco-kind {{ font: 600 10px {config.font_family}; fill: #334155; text-anchor: middle; letter-spacing: 0.05em; }}
-.silco-edge {{ stroke: #334155; stroke-width: 1.6; fill: none; marker-end: url(#umlArrow); }}
-.silco-edge-label {{ font: 600 11px {config.font_family}; fill: #0f172a; text-anchor: middle; paint-order: stroke; stroke: #f8fafc; stroke-width: 5; }}
-.silco-group {{ fill: url(#packageGradient); stroke: #0284c7; stroke-width: 1.25; }}
-.silco-group-label {{ font: 700 12px {config.font_family}; fill: #0f172a; }}
-.silco-uml-shape {{ stroke: #334155; fill: #e2e8f0; stroke-width: 1.25; }}
-.silco-uml-icon {{ stroke: #334155; fill: #e2e8f0; stroke-width: 1.25; }}
-.silco-uml-icon-line {{ stroke: #334155; stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }}
-""".strip()
-
-
-def _legacy_definitions(_: RenderConfig) -> tuple[Element, ...]:
-    return (
-        Element(
-            "marker",
-            {
-                "id": "arrow",
-                "viewBox": "0 0 10 10",
-                "refX": 9,
-                "refY": 5,
-                "markerWidth": 7,
-                "markerHeight": 7,
-                "orient": "auto-start-reverse",
-            },
-            children=(Element("path", {"d": "M 0 0 L 10 5 L 0 10 z", "fill": "#475569"}),),
-        ),
-        Element(
-            "marker",
-            {
-                "id": "umlArrow",
-                "viewBox": "0 0 10 10",
-                "refX": 10,
-                "refY": 5,
-                "markerWidth": 8,
-                "markerHeight": 8,
-                "orient": "auto",
-                "markerUnits": "strokeWidth",
-            },
-            children=(Element("path", {"d": "M 0 0 L 10 5 L 0 10 L 2 5 Z", "fill": "#334155"}),),
-        ),
-        Element(
-            "linearGradient",
-            {"id": "canvasGradient", "x1": "0%", "y1": "0%", "x2": "0%", "y2": "100%"},
-            children=(
-                Element("stop", {"offset": "0%", "stop-color": "#f8fafc"}),
-                Element("stop", {"offset": "100%", "stop-color": "#eef2ff"}),
-            ),
-        ),
-        Element(
-            "linearGradient",
-            {"id": "packageGradient", "x1": "0%", "y1": "0%", "x2": "100%", "y2": "100%"},
-            children=(
-                Element("stop", {"offset": "0%", "stop-color": "#e0f2fe", "stop-opacity": "0.92"}),
-                Element("stop", {"offset": "100%", "stop-color": "#e2e8f0", "stop-opacity": "0.82"}),
-            ),
-        ),
-        Element(
-            "filter",
-            {"id": "nodeShadow", "x": "-15%", "y": "-15%", "width": "130%", "height": "140%"},
-            children=(
-                Element(
-                    "feDropShadow",
-                    {
-                        "dx": "0",
-                        "dy": "8",
-                        "stdDeviation": "4",
-                        "flood-color": "#0f172a",
-                        "flood-opacity": "0.14",
-                    },
-                ),
-            ),
-        ),
-    )
-
-
-def _legacy_background(width: float, height: float, _: RenderConfig) -> Element:
-    return Element("rect", {"x": 0, "y": 0, "width": width, "height": height, "fill": "url(#canvasGradient)", "class": "silco-bg"})
-
-
-def _legacy_node(item, y_offset: float, _: RenderConfig) -> Element:
-    return _svg_node(item, y_offset)
-
-
-def _legacy_edge(edge, layout, y_offset: float, _: RenderConfig) -> Element:
-    return _svg_edge(edge, layout, y_offset)
-
-
-def _legacy_group(diagram, layout, y_offset: float, _: RenderConfig) -> Iterable[Element]:
-    return group_bounds(diagram, layout, y_offset)
-
-
-def _legacy_svg_style() -> SvgStyle:
-    return SvgStyle(
-        name="modern",
-        description="Legacy built-in SVG style.",
-        stylesheet=_legacy_stylesheet,
-        definitions=_legacy_definitions,
-        render_node=_legacy_node,
-        render_edge=_legacy_edge,
-        render_group=_legacy_group,
-        render_background=_legacy_background,
-    )
-
-
-_FALLBACK_STYLE = _legacy_svg_style()
-
-
-def _resolve_style(config: RenderConfig) -> SvgStyle:
-    # Load built-in style plugins lazily so `to_svg(style=...)` works out of the box.
-    try:
-        from silco.plugins.renderers import styles as _styles  # noqa: F401
-        del _styles
-    except ImportError:
-        if config.style != "modern":
-            raise ValueError(f"Unknown SVG style: {config.style!r}. Available styles: legacy (modern)")
-        return _FALLBACK_STYLE
-
-    if config.style == "modern" and config.style not in kernel.names("styles"):
-        return _FALLBACK_STYLE
-
+    del _styles
     if config.style not in kernel.names("styles"):
-        available = ", ".join(kernel.names("styles")) or "legacy"
+        available = ", ".join(kernel.names("styles")) or "none"
         raise ValueError(f"Unknown SVG style: {config.style!r}. Available styles: {available}")
-
     style = kernel.get("styles", config.style)
-    if not isinstance(style, SvgStyle):
-        raise TypeError(f"Style plugin {config.style!r} is not a SvgStyle")
+    if not isinstance(style, DiagramStyle):
+        raise TypeError(f"Style plugin {config.style!r} is not a DiagramStyle")
     return style
 
 

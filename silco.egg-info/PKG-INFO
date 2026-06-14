@@ -1,3 +1,17 @@
+Metadata-Version: 2.4
+Name: silco
+Version: 0.1.0
+Summary: Microkernel-based Python toolkit for system diagrams, SVG rendering, and plugin-driven exports
+Requires-Python: >=3.14
+Description-Content-Type: text/markdown
+Requires-Dist: diagrams>=0.25.1
+Requires-Dist: graphviz>=0.20.3
+Requires-Dist: pydantic>=2.13.3
+Provides-Extra: notebook
+Requires-Dist: ipython>=8; extra == "notebook"
+Provides-Extra: pdf
+Requires-Dist: cairosvg>=2.7; extra == "pdf"
+
 # SILCO (**S**ystem **I**llustration & **L**ayout **Co**mposer)
 
 Silco is a Python-first diagram toolkit built around a small microkernel. The core owns the document model, layout contracts, and plugin registry; renderers, styles, and presenters plug into that kernel. The default SVG renderer now uses the `diagrams` package with C4-flavored Graphviz output so the generated diagrams read like real system design documentation instead of custom-drawn boxes.

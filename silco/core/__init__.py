@@ -4,13 +4,14 @@ from silco.core.renderers.base.layout import Layout
 from silco.core.renderers.base.positioned_node import PositionedNode
 from silco.core.renderers.base.graphics import Canvas, Element
 from silco.core.kernel import PLUGIN_CATEGORIES, PluginCategory, PluginInfo, SilcoKernel, kernel
-from silco.core.models import Edge, Group, Node, NodeKind
+from silco.core.models import Edge, Flow, Group, Node, NodeKind
 
 __all__ = [
     "Canvas",
     "Diagram",
     "Edge",
     "Element",
+    "Flow",
     "Group",
     "Layout",
     "Node",

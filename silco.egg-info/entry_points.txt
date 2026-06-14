@@ -1,0 +1,3 @@
+[silco.plugins]
+ipython = silco.plugins.ipython
+pdf = silco.plugins.pdf

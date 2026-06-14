@@ -1,7 +1,7 @@
 import unittest
 from types import SimpleNamespace
 
-from silco import Diagram, diagram
+from silco import Diagram, Flow, diagram
 
 
 class CoreTest(unittest.TestCase):
@@ -33,15 +33,21 @@ class CoreTest(unittest.TestCase):
 
         svg = d.to_svg()
 
-        self.assertIn('class="silco-group"', svg)
-        self.assertIn(">app<", svg)
-        self.assertIn(">RESP<", svg)
+        self.assertIn('class="cluster"', svg)
+        self.assertIn(">app</text>", svg)
+        self.assertIn(">RESP</text>", svg)
 
     def test_unknown_edge_endpoint_fails(self) -> None:
         d = diagram().node("api")
 
         with self.assertRaisesRegex(ValueError, "unknown target node"):
             d.connect("api", "missing")
+
+    def test_unknown_flow_endpoint_fails(self) -> None:
+        d = diagram().node("api")
+
+        with self.assertRaisesRegex(ValueError, "unknown target node"):
+            d.flow("api", "missing")
 
     def test_svg_renderer_supports_styles(self) -> None:
         d = (
@@ -55,26 +61,23 @@ class CoreTest(unittest.TestCase):
         uml_svg = d.to_svg(style="uml")
 
         self.assertNotEqual(default_svg, uml_svg)
-        self.assertIn("modern-arrow", default_svg)
-        self.assertIn("uml-arrow", uml_svg)
+        self.assertIn("#1168bd", default_svg)
+        self.assertIn("#dbeafe", uml_svg)
 
     def test_database_nodes_use_database_glyph_in_modern_style(self) -> None:
         svg = diagram("Inventory").node("db", "Orders DB", kind="database").to_svg(style="modern")
 
-        self.assertIn('class="silco-kind"', svg)
-        self.assertGreaterEqual(svg.count("<ellipse"), 2)
-        self.assertIn("fill=\"#dbeafe\"", svg)
+        self.assertIn("Orders DB", svg)
+        self.assertIn("Database", svg)
+        self.assertIn("#438dd5", svg)
 
-    def test_modern_style_loads_shape_templates(self) -> None:
+    def test_modern_style_is_a_diagrams_preset(self) -> None:
         from silco.plugins.renderers.styles import modern
+        from silco.core.renderers.style import DiagramStyle
 
-        self.assertIsNotNone(modern._shape_template("actor", 10, 20, 160, 72))
-        self.assertIsNotNone(modern._shape_template("component", 10, 20, 160, 72))
-        self.assertIsNotNone(modern._shape_template("database", 10, 20, 160, 72))
-        self.assertIsNotNone(modern._shape_template("queue", 10, 20, 160, 72))
-        self.assertIsNotNone(modern._shape_template("cache", 10, 20, 160, 72))
-        self.assertIsNotNone(modern._shape_template("storage", 10, 20, 160, 72))
-        self.assertIsNotNone(modern._shape_template("external", 10, 20, 160, 72))
+        self.assertIsInstance(modern.STYLE, DiagramStyle)
+        self.assertEqual("modern", modern.STYLE.name)
+        self.assertIn("database", modern.STYLE.node_kind_attr)
 
     def test_unknown_style_fails_fast(self) -> None:
         d = diagram().node("api")
@@ -95,6 +98,54 @@ class CoreTest(unittest.TestCase):
         rows = sorted({node.y for node in layout.nodes.values()})
         self.assertGreaterEqual(len(rows), 2)
         self.assertEqual(rows[1] - rows[0], 72 + 48 * 1.5)
+
+    def test_flow_relations_render_in_svg_and_mermaid(self) -> None:
+        d = (
+            diagram("Flow")
+            .node("api", "API", group="app")
+            .node("queue", "Queue", kind="queue", group="app")
+            .flow("api", "queue", protocol="AMQP")
+        )
+
+        svg = d.to_svg()
+        mermaid = d.to_mermaid()
+
+        self.assertIn(">AMQP</text>", svg)
+        self.assertIn("api -->|AMQP| queue", mermaid)
+
+    def test_flow_model_is_exported(self) -> None:
+        f = Flow(source="a", target="b", label="sync")
+        self.assertEqual(f.display_label, "sync")
+
+    def test_layout_separates_overlapping_groups(self) -> None:
+        d = (
+            diagram("Groups", direction="LR")
+            .node("a", "A", group="g1", line=0)
+            .node("b", "B", group="g1", line=1)
+            .node("c", "C", group="g2", line=0)
+            .node("d", "D", group="g2", line=1)
+            .connect("a", "b")
+            .connect("c", "d")
+        )
+        layout = d.layout("dag", width=700, node_width=180, node_height=84, node_gap=40)
+
+        def box(group_id: str) -> tuple[float, float, float, float]:
+            members = [layout.nodes[node.id] for node in d.nodes.values() if node.group == group_id]
+            left = min(item.x for item in members)
+            top = min(item.y for item in members)
+            right = max(item.x + item.width for item in members)
+            bottom = max(item.y + item.height for item in members)
+            return left, top, right, bottom
+
+        g1 = box("g1")
+        g2 = box("g2")
+        overlap = not (
+            g1[2] <= g2[0]
+            or g2[2] <= g1[0]
+            or g1[3] <= g2[1]
+            or g2[3] <= g1[1]
+        )
+        self.assertFalse(overlap)
 
 class PluginRegistryTest(unittest.TestCase):
     def test_plugins_are_categorized_with_metadata(self) -> None:

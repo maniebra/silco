@@ -1,7 +1,7 @@
 from silco.core.renderers.exporter.svg import svg_renderer
 from silco.core.kernel import kernel
-from silco.core.renderers.base.diagram import mermaid_renderer
 from silco.core.renderers.base.layout import dag_layout, grid_layout
+from silco.core.renderers.svg_common import render_mermaid
 
 kernel.register(
     "layouts",
@@ -27,9 +27,9 @@ kernel.register(
 kernel.register(
     "renderers",
     "mermaid",
-    mermaid_renderer,
+    render_mermaid,
     description="Mermaid flowchart text renderer.",
     tags=("builtin", "renderer", "text"),
 )
 
-__all__ = ["mermaid_renderer", "svg_renderer"]
+__all__ = ["render_mermaid", "svg_renderer"]

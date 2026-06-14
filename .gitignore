@@ -17,3 +17,11 @@
 .venv/
 .env/
 venv/
+
+.pytest_cache/
+.ruff_cache/
+
+**/*.ipynb
+
+.agents/
+.codex/

@@ -1,10 +1,16 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "silco"
 version = "0.1.0"
-description = "Add your description here"
+description = "Microkernel-based Python toolkit for system diagrams, SVG rendering, and plugin-driven exports"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "diagrams>=0.25.1",
+    "graphviz>=0.20.3",
     "pydantic>=2.13.3",
 ]
 
@@ -19,3 +25,15 @@ pdf = [
 [project.entry-points."silco.plugins"]
 ipython = "silco.plugins.ipython"
 pdf = "silco.plugins.pdf"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["silco*"]
+
+[tool.setuptools.package-data]
+silco = [
+    "core/templates/shapes/*.svg",
+    "core/templates/shapes/*.png",
+]

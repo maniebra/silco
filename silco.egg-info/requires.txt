@@ -1,0 +1,9 @@
+diagrams>=0.25.1
+graphviz>=0.20.3
+pydantic>=2.13.3
+
+[notebook]
+ipython>=8
+
+[pdf]
+cairosvg>=2.7
