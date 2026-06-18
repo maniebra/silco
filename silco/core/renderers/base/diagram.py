@@ -5,7 +5,7 @@ from os import PathLike
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 
 from silco.core.kernel import kernel
 from silco.core.models.edge import Edge
@@ -33,17 +33,14 @@ class Diagram(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
     _default_renderer: str = PrivateAttr(default="svg")
 
-    @field_validator("direction")
-    @classmethod
-    def validate_direction(cls, value: str) -> str:
-        if value not in {"LR", "RL", "TB", "BT"}:
-            raise ValueError("direction must be one of LR, RL, TB, BT")
-        return value
-
     @model_validator(mode="after")
     def validate_relations(self) -> "Diagram":
         for collection_name, relations in (("edges", self.edges), ("flows", self.flows)):
-            missing = [f"{relation.source}->{relation.target}" for relation in relations if relation.source not in self.nodes or relation.target not in self.nodes]
+            missing = [
+                f"{relation.source}->{relation.target}"
+                for relation in relations
+                if relation.source not in self.nodes or relation.target not in self.nodes
+            ]
             if missing:
                 joined = ", ".join(missing)
                 raise ValueError(f"{collection_name} reference unknown nodes: {joined}")
