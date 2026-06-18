@@ -102,8 +102,8 @@ class Diagram(BaseModel):
             bidirectional=bidirectional,
             metadata=metadata,
         )
-        target_collection = self.flows if relation_type is Flow else self.edges
-        target_collection.append(relation)
+        collection = self.flows if relation_type is Flow else self.edges
+        collection.append(relation)
         return self
 
     def add_edge(
@@ -116,7 +116,15 @@ class Diagram(BaseModel):
         bidirectional: bool = False,
         **metadata: Any,
     ) -> "Diagram":
-        return self._append_relation(Edge, source, target, label, protocol=protocol, bidirectional=bidirectional, **metadata)
+        return self._append_relation(
+            Edge,
+            source,
+            target,
+            label,
+            protocol=protocol,
+            bidirectional=bidirectional,
+            **metadata,
+        )
 
     connect = add_edge
 
@@ -130,7 +138,15 @@ class Diagram(BaseModel):
         bidirectional: bool = False,
         **metadata: Any,
     ) -> "Diagram":
-        return self._append_relation(Flow, source, target, label, protocol=protocol, bidirectional=bidirectional, **metadata)
+        return self._append_relation(
+            Flow,
+            source,
+            target,
+            label,
+            protocol=protocol,
+            bidirectional=bidirectional,
+            **metadata,
+        )
 
     flow = add_flow
 
