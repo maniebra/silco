@@ -72,8 +72,8 @@ class CoreTest(unittest.TestCase):
         self.assertIn("#438dd5", svg)
 
     def test_modern_style_is_a_diagrams_preset(self) -> None:
+        from silco.core.renderers.diagrams_backend import DiagramStyle
         from silco.plugins.renderers.styles import modern
-        from silco.core.renderers.style import DiagramStyle
 
         self.assertIsInstance(modern.STYLE, DiagramStyle)
         self.assertEqual("modern", modern.STYLE.name)

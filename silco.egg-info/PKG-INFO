@@ -4,6 +4,7 @@ Version: 0.1.0
 Summary: Microkernel-based Python toolkit for system diagrams, SVG rendering, and plugin-driven exports
 Requires-Python: >=3.14
 Description-Content-Type: text/markdown
+License-File: LICENSE
 Requires-Dist: diagrams>=0.25.1
 Requires-Dist: graphviz>=0.20.3
 Requires-Dist: pydantic>=2.13.3
@@ -11,6 +12,7 @@ Provides-Extra: notebook
 Requires-Dist: ipython>=8; extra == "notebook"
 Provides-Extra: pdf
 Requires-Dist: cairosvg>=2.7; extra == "pdf"
+Dynamic: license-file
 
 # SILCO (**S**ystem **I**llustration & **L**ayout **Co**mposer)
 

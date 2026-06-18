@@ -1,8 +1,4 @@
-"""Mermaid text rendering used by the built-in 'mermaid' renderer.
-
-The module name is kept for backwards compatibility with imports such as
-``from silco.core.renderers.svg_common import render_mermaid``.
-"""
+"""Mermaid text rendering used by the built-in 'mermaid' renderer."""
 
 from __future__ import annotations
 

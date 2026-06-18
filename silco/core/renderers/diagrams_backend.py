@@ -9,7 +9,7 @@ import subprocess
 from typing import Any
 
 from silco.core.models.node import Node
-from silco.core.renderers.base.config import RenderConfig
+from silco.core.render_config import RenderConfig
 
 
 @dataclass(frozen=True)

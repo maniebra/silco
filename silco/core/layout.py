@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
-from silco.core.renderers.base.config import RenderConfig
-from silco.core.renderers.base.positioned_node import PositionedNode
+from silco.core.positioned_node import PositionedNode
+from silco.core.render_config import RenderConfig
 
 if TYPE_CHECKING:
-    from silco.core.renderers.base.diagram import Diagram
+    from silco.core.diagram import Diagram
 
 MAX_COLUMNS_PER_ROW = 4
 

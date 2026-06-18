@@ -34,6 +34,7 @@ include = ["silco*"]
 
 [tool.setuptools.package-data]
 silco = [
+    "py.typed",
     "core/templates/shapes/*.svg",
     "core/templates/shapes/*.png",
 ]

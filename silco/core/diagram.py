@@ -14,7 +14,7 @@ from silco.core.models.group import Group
 from silco.core.models.node import Node
 
 if TYPE_CHECKING:
-    from silco.core.renderers.base.layout import Layout
+    from silco.core.layout import Layout
 
 Direction = Literal["LR", "RL", "TB", "BT"]
 

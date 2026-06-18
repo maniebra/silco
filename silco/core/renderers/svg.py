@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from silco.core.diagram import Diagram
 from silco.core.kernel import kernel
-from silco.core.renderers.base.config import RenderConfig
-from silco.core.renderers.base.diagram import Diagram
+from silco.core.render_config import RenderConfig
 from silco.core.renderers.diagrams_backend import DiagramStyle, render_svg
 
 
