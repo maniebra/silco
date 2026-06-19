@@ -9,7 +9,7 @@ import subprocess
 from typing import Any
 
 from silco.core.models.node import Node
-from silco.core.renderers.base.config import RenderConfig
+from silco.core.render_config import RenderConfig
 
 
 @dataclass(frozen=True)
@@ -66,10 +66,9 @@ class DiagramStyle:
         }
 
     def node_options(self, node: Node) -> dict[str, str]:
-        kind_key = _node_style_key(node.kind)
         return {
             **self.node_kind_attr.get("default", {}),
-            **self.node_kind_attr.get(kind_key, {}),
+            **self.node_kind_attr.get(node.kind, {}),
         }
 
 
@@ -223,12 +222,6 @@ def _default_technology(kind: str) -> str:
         "external": "External System",
         "actor": "User",
     }.get(kind, kind.replace("_", " ").title())
-
-
-def _node_style_key(kind: str) -> str:
-    if kind in {"service", "component", "queue", "cache", "storage"}:
-        return kind
-    return kind
 
 
 def _template_path(filename: str) -> Path:

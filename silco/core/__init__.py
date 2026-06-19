@@ -1,10 +1,16 @@
-from silco.core.renderers.base.config import RenderConfig
-from silco.core.renderers.base.diagram import Diagram, diagram
-from silco.core.renderers.base.layout import Layout
-from silco.core.renderers.base.positioned_node import PositionedNode
-from silco.core.renderers.base.graphics import Canvas, Element
-from silco.core.kernel import PLUGIN_CATEGORIES, PluginCategory, PluginInfo, SilcoKernel, kernel
+from silco.core.diagram import Diagram, diagram
+from silco.core.graphics import Canvas, Element
+from silco.core.kernel import (
+    PLUGIN_CATEGORIES,
+    PluginCategory,
+    PluginInfo,
+    SilcoKernel,
+    kernel,
+)
+from silco.core.layout import Layout
 from silco.core.models import Edge, Flow, Group, Node, NodeKind
+from silco.core.positioned_node import PositionedNode
+from silco.core.render_config import RenderConfig
 
 __all__ = [
     "Canvas",

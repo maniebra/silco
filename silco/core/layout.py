@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
-from silco.core.renderers.base.config import RenderConfig
-from silco.core.renderers.base.positioned_node import PositionedNode
+from silco.core.positioned_node import PositionedNode
+from silco.core.render_config import RenderConfig
 
 if TYPE_CHECKING:
-    from silco.core.renderers.base.diagram import Diagram
+    from silco.core.diagram import Diagram
 
 MAX_COLUMNS_PER_ROW = 4
 
@@ -40,7 +40,11 @@ def dag_layout(diagram: Diagram, **options: Any) -> Layout:
         if horizontal:
             line, slot, count = slot_in_line[node_id]
             x = _horizontal_slot_x(config, slot, count)
-            y = config.margin + line * (config.node_height + config.node_gap * 2) + index * (config.node_height + config.node_gap)
+            y = (
+                config.margin
+                + line * (config.node_height + config.node_gap * 2)
+                + index * (config.node_height + config.node_gap)
+            )
         else:
             x = config.margin + rank * (config.node_width + config.rank_gap)
             y = config.margin + index * (config.node_height + config.node_gap)
@@ -54,8 +58,14 @@ def dag_layout(diagram: Diagram, **options: Any) -> Layout:
         )
 
     _separate_overlapping_groups(diagram, positions)
-    width = max((node.x + node.width + config.margin for node in positions.values()), default=config.width)
-    height = max((node.y + node.height + config.margin for node in positions.values()), default=200)
+    width = max(
+        (node.x + node.width + config.margin for node in positions.values()),
+        default=config.width,
+    )
+    height = max(
+        (node.y + node.height + config.margin for node in positions.values()),
+        default=200,
+    )
     return Layout(nodes=positions, width=float(max(width, config.width)), height=float(height))
 
 
@@ -110,9 +120,10 @@ def _rank_nodes(diagram: Diagram) -> dict[str, tuple[int, int]]:
 def _ordered_nodes_for_horizontal_layout(
     ranks: dict[str, tuple[int, int]], direction: str, max_rank: int
 ) -> list[tuple[str, int, int, int]]:
-    ordered_nodes: list[tuple[str, int, int, int]] = []
-    for seq, (node_id, (rank, index)) in enumerate(ranks.items()):
-        ordered_nodes.append((node_id, _flip_rank(rank, direction, max_rank), index, seq))
+    ordered_nodes = [
+        (node_id, _flip_rank(rank, direction, max_rank), index, seq)
+        for seq, (node_id, (rank, index)) in enumerate(ranks.items())
+    ]
     ordered_nodes.sort(key=lambda item: (item[1], item[2], item[3]))
     return ordered_nodes
 
@@ -180,12 +191,22 @@ def grid_layout(diagram: Diagram, **options: Any) -> Layout:
             height=float(config.node_height),
         )
     _separate_overlapping_groups(diagram, positions)
-    width = max((node.x + node.width + config.margin for node in positions.values()), default=config.width)
-    height = max((node.y + node.height + config.margin for node in positions.values()), default=200)
+    width = max(
+        (node.x + node.width + config.margin for node in positions.values()),
+        default=config.width,
+    )
+    height = max(
+        (node.y + node.height + config.margin for node in positions.values()),
+        default=200,
+    )
     return Layout(nodes=positions, width=float(max(width, config.width)), height=float(height))
 
 
-def _separate_overlapping_groups(diagram: Diagram, positions: dict[str, PositionedNode], padding: float = 22.0) -> None:
+def _separate_overlapping_groups(
+    diagram: Diagram,
+    positions: dict[str, PositionedNode],
+    padding: float = 22.0,
+) -> None:
     group_members: dict[str, list[str]] = {}
     for node_id, node in diagram.nodes.items():
         if node.group and node_id in positions:

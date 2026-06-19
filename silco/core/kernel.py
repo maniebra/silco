@@ -10,8 +10,13 @@ from types import ModuleType
 from typing import Any, Literal
 
 PluginCategory = Literal["shapes", "renderers", "layouts", "presenters", "styles"]
-PluginType = PluginCategory
-PLUGIN_CATEGORIES: tuple[PluginCategory, ...] = ("shapes", "renderers", "layouts", "presenters", "styles")
+PLUGIN_CATEGORIES: tuple[PluginCategory, ...] = (
+    "shapes",
+    "renderers",
+    "layouts",
+    "presenters",
+    "styles",
+)
 _CATEGORY_ALIASES = {
     "shape": "shapes",
     "shapes": "shapes",
@@ -45,8 +50,12 @@ class SilcoKernel:
     """Registry and discovery hub for core and optional plugins."""
 
     def __init__(self) -> None:
-        self.plugins: dict[PluginCategory, dict[str, Any]] = {category: {} for category in PLUGIN_CATEGORIES}
-        self._plugin_info: dict[PluginCategory, dict[str, PluginInfo]] = {category: {} for category in PLUGIN_CATEGORIES}
+        self.plugins: dict[PluginCategory, dict[str, Any]] = {
+            category: {} for category in PLUGIN_CATEGORIES
+        }
+        self._plugin_info: dict[PluginCategory, dict[str, PluginInfo]] = {
+            category: {} for category in PLUGIN_CATEGORIES
+        }
         self._discovered_modules: set[str] = set()
         self._discovered_entry_points: set[str] = set()
 
@@ -100,11 +109,16 @@ class SilcoKernel:
         category = self.normalize_category(plugin_type)
         return self._plugin_info[category][name]
 
-    def list(self, plugin_type: str | None = None) -> dict[PluginCategory, tuple[PluginInfo, ...]] | tuple[PluginInfo, ...]:
+    def list(
+        self, plugin_type: str | None = None
+    ) -> dict[PluginCategory, tuple[PluginInfo, ...]] | tuple[PluginInfo, ...]:
         if plugin_type is not None:
             category = self.normalize_category(plugin_type)
             return tuple(self._plugin_info[category].values())
-        return {category: tuple(self._plugin_info[category].values()) for category in PLUGIN_CATEGORIES}
+        return {
+            category: tuple(self._plugin_info[category].values())
+            for category in PLUGIN_CATEGORIES
+        }
 
     def names(self, plugin_type: str) -> tuple[str, ...]:
         category = self.normalize_category(plugin_type)
@@ -195,9 +209,15 @@ class SilcoKernel:
         )
 
     def _snapshot(self) -> set[tuple[PluginCategory, str]]:
-        return {(category, name) for category, plugins in self.plugins.items() for name in plugins}
+        return {
+            (category, name)
+            for category, plugins in self.plugins.items()
+            for name in plugins
+        }
 
-    def _new_plugins_since(self, snapshot: set[tuple[PluginCategory, str]]) -> tuple[PluginInfo, ...]:
+    def _new_plugins_since(
+        self, snapshot: set[tuple[PluginCategory, str]]
+    ) -> tuple[PluginInfo, ...]:
         new_plugins: list[PluginInfo] = []
         for category, infos in self._plugin_info.items():
             for name, info in infos.items():
