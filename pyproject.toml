@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "silco"
-version = "0.1.0"
+version = "0.1.1"
 description = "Microkernel-based Python toolkit for system diagrams, SVG rendering, and plugin-driven exports"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.10"
 dependencies = [
     "diagrams>=0.25.1",
     "graphviz>=0.20.3",

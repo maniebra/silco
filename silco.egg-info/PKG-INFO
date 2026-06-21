@@ -1,8 +1,8 @@
 Metadata-Version: 2.4
 Name: silco
-Version: 0.1.0
+Version: 0.1.1
 Summary: Microkernel-based Python toolkit for system diagrams, SVG rendering, and plugin-driven exports
-Requires-Python: >=3.14
+Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: diagrams>=0.25.1
