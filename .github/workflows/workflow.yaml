@@ -28,6 +28,9 @@ jobs:
 
       - name: Sync package version
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           set -euo pipefail
           VERSION="$(python - <<'PY'
@@ -35,15 +38,24 @@ jobs:
           from pathlib import Path
           import re
 
-          ref = os.environ["GITHUB_REF_NAME"]
-          match = re.fullmatch(r"v?(\d+\.\d+\.\d+)", ref)
-          if match:
+          if os.environ["EVENT_NAME"] == "release":
+              tag = os.environ["RELEASE_TAG"]
+              match = re.fullmatch(r"v(\d+\.\d+\.\d+)", tag)
+              if not match:
+                  raise SystemExit(
+                      f"Release tag {tag!r} must use the format vX.Y.Z"
+                  )
               print(match.group(1))
           else:
               text = Path("pyproject.toml").read_text()
-              print(re.search(r'^version = "([^"]+)"$', text, re.M).group(1))
+              match = re.search(r'^version = "([^"]+)"$', text, re.M)
+              if not match:
+                  raise SystemExit("No project version found in pyproject.toml")
+              print(match.group(1))
           PY
           )"
+
+          echo "PACKAGE_VERSION=${VERSION}" >> "$GITHUB_ENV"
 
           python - <<PY
           from pathlib import Path
@@ -78,6 +90,33 @@ jobs:
 
       - name: Build distributions
         run: python -m build
+
+      - name: Verify distribution version
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          version = os.environ["PACKAGE_VERSION"]
+          wheel = Path(f"dist/silco-{version}-py3-none-any.whl")
+          sdist = Path(f"dist/silco-{version}.tar.gz")
+
+          if not wheel.is_file() or not sdist.is_file():
+              raise SystemExit(
+                  f"Expected silco {version} distributions, found: "
+                  + ", ".join(path.name for path in Path("dist").iterdir())
+              )
+
+          with ZipFile(wheel) as archive:
+              metadata_name = next(
+                  name for name in archive.namelist() if name.endswith(".dist-info/METADATA")
+              )
+              metadata = archive.read(metadata_name).decode()
+
+          if f"Version: {version}\n" not in metadata:
+              raise SystemExit(f"Wheel metadata does not contain Version: {version}")
+          PY
 
       - name: Check distributions
         run: python -m twine check dist/*
