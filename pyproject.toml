@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "silco"
-version = "0.1.1"
+version = "0.1.2"
 description = "Microkernel-based Python toolkit for system diagrams, SVG rendering, and plugin-driven exports"
 readme = "README.md"
 requires-python = ">=3.10"

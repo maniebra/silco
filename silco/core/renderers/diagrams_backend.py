@@ -99,7 +99,8 @@ def render_svg(diagram, config: RenderConfig, style: DiagramStyle) -> str:
     try:
         nodes = _build_nodes(diagram, style)
         _build_edges(diagram, nodes)
-        return _inline_local_images(graph.dot.pipe(format="svg", encoding="utf-8"))
+        svg = graph.dot.pipe(format="svg", encoding="utf-8")
+        return _fix_rtl_text(_inline_local_images(svg))
     finally:
         setcluster(None)
         setdiagram(None)
@@ -269,3 +270,28 @@ def _inline_local_images(svg: str) -> str:
         return f'{prefix}data:{mime};base64,{encoded}{suffix}'
 
     return pattern.sub(replace, svg)
+
+
+_RTL_TEXT = re.compile(r"[\u0590-\u08ff]")
+_SVG_TEXT = re.compile(r"<text(?P<attrs>[^>]*)>(?P<value>.*?)</text>")
+
+
+def _fix_rtl_text(svg: str) -> str:
+    def replace(match: re.Match[str]) -> str:
+        value = match.group("value")
+        if not _RTL_TEXT.search(value):
+            return match.group(0)
+
+        attrs = match.group("attrs")
+        anchor = re.search(r'text-anchor="(start|middle|end)"', attrs)
+        if anchor and anchor.group(1) != "middle":
+            opposite = "end" if anchor.group(1) == "start" else "start"
+            attrs = (
+                attrs[: anchor.start(1)]
+                + opposite
+                + attrs[anchor.end(1) :]
+            )
+        attrs += ' direction="rtl" unicode-bidi="plaintext"'
+        return f"<text{attrs}>{value}</text>"
+
+    return _SVG_TEXT.sub(replace, svg)

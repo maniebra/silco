@@ -71,6 +71,28 @@ class CoreTest(unittest.TestCase):
         self.assertIn("Database", svg)
         self.assertIn("#438dd5", svg)
 
+    def test_svg_renderer_keeps_rtl_text_inside_graphviz_bounds(self) -> None:
+        svg = (
+            diagram("سکوی تجارت الکترونیک", direction="RL")
+            .node("orders", "سرویس سفارش", kind="service")
+            .node("db", "پایگاه داده سفارش", kind="database")
+            .connect("orders", "db", "ماندگاری سفارش", protocol="SQL")
+            .to_svg()
+        )
+
+        self.assertRegex(
+            svg,
+            r'<text[^>]*text-anchor="end"[^>]*direction="rtl"[^>]*>سرویس سفارش</text>',
+        )
+        self.assertRegex(
+            svg,
+            r'<text[^>]*text-anchor="middle"[^>]*direction="rtl"[^>]*>سکوی تجارت الکترونیک</text>',
+        )
+        self.assertRegex(
+            svg,
+            r'<text[^>]*text-anchor="end"[^>]*direction="rtl"[^>]*>ماندگاری سفارش \(SQL\)</text>',
+        )
+
     def test_modern_style_is_a_diagrams_preset(self) -> None:
         from silco.core.renderers.diagrams_backend import DiagramStyle
         from silco.plugins.renderers.styles import modern
