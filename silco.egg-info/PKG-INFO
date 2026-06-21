@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: silco
-Version: 0.1.2
+Version: 0.1.3
 Summary: Microkernel-based Python toolkit for system diagrams, SVG rendering, and plugin-driven exports
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown

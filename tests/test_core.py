@@ -1,4 +1,6 @@
 import unittest
+from contextlib import redirect_stderr
+from io import StringIO
 from types import SimpleNamespace
 
 from silco import Diagram, Flow, diagram
@@ -72,17 +74,20 @@ class CoreTest(unittest.TestCase):
         self.assertIn("#438dd5", svg)
 
     def test_svg_renderer_keeps_rtl_text_inside_graphviz_bounds(self) -> None:
-        svg = (
-            diagram("سکوی تجارت الکترونیک", direction="RL")
-            .node("orders", "سرویس سفارش", kind="service")
-            .node("db", "پایگاه داده سفارش", kind="database")
-            .connect("orders", "db", "ماندگاری سفارش", protocol="SQL")
-            .to_svg()
-        )
+        stderr = StringIO()
+        with redirect_stderr(stderr):
+            svg = (
+                diagram("سکوی تجارت الکترونیک", direction="RL")
+                .node("web", "وب اپلیکیشن فروشگاه", kind="service")
+                .node("orders", "سرویس پردازش و مدیریت سفارش", kind="service")
+                .node("db", "پایگاه داده سفارش های مشتریان", kind="database")
+                .connect("orders", "db", "ماندگاری سفارش", protocol="SQL")
+                .to_svg()
+            )
 
         self.assertRegex(
             svg,
-            r'<text[^>]*text-anchor="end"[^>]*direction="rtl"[^>]*>سرویس سفارش</text>',
+            r'<text[^>]*text-anchor="end"[^>]*direction="rtl"[^>]*>سرویس پردازش و مدیریت سفارش</text>',
         )
         self.assertRegex(
             svg,
@@ -92,6 +97,7 @@ class CoreTest(unittest.TestCase):
             svg,
             r'<text[^>]*text-anchor="end"[^>]*direction="rtl"[^>]*>ماندگاری سفارش \(SQL\)</text>',
         )
+        self.assertNotIn("size too small for label", stderr.getvalue())
 
     def test_modern_style_is_a_diagrams_preset(self) -> None:
         from silco.core.renderers.diagrams_backend import DiagramStyle

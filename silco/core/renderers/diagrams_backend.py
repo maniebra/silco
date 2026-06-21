@@ -143,13 +143,31 @@ def _make_node(node: Node, style: DiagramStyle) -> Any:
 
     description = node.description or str(node.metadata.get("description", "") or "")
     technology = str(node.metadata.get("technology", "") or _default_technology(node.kind))
-    kwargs = {"nodeid": node.id, **style.node_options(node)}
+    kwargs = {
+        "nodeid": node.id,
+        "fixedsize": "false",
+        "width": "2.6",
+        "height": "1.2",
+        "margin": "0.18,0.12",
+        **style.node_options(node),
+    }
 
     if node.kind == "actor":
         actor_kwargs = {
             key: value
             for key, value in kwargs.items()
-            if key not in {"fillcolor", "color", "style", "shape", "fontcolor", "width", "height"}
+            if key
+            not in {
+                "fillcolor",
+                "color",
+                "style",
+                "shape",
+                "fontcolor",
+                "fixedsize",
+                "width",
+                "height",
+                "margin",
+            }
         }
         actor_image = _ensure_raster_template("actor")
         label = node.display_label if not description else f"{node.display_label}\n{description}"
