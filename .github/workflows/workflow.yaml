@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -23,6 +25,56 @@ jobs:
 
       - name: Clean old build artifacts
         run: rm -rf dist build *.egg-info
+
+      - name: Sync package version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(python - <<'PY'
+          import os
+          from pathlib import Path
+          import re
+
+          ref = os.environ["GITHUB_REF_NAME"]
+          match = re.fullmatch(r"v?(\d+\.\d+\.\d+)", ref)
+          if match:
+              print(match.group(1))
+          else:
+              text = Path("pyproject.toml").read_text()
+              print(re.search(r'^version = "([^"]+)"$', text, re.M).group(1))
+          PY
+          )"
+
+          python - <<PY
+          from pathlib import Path
+          import re
+
+          version = "${VERSION}"
+
+          pyproject = Path("pyproject.toml")
+          pyproject.write_text(
+              re.sub(
+                  r'^version = "[^"]+"$',
+                  f'version = "{version}"',
+                  pyproject.read_text(),
+                  count=1,
+                  flags=re.M,
+              )
+          )
+
+          init_py = Path("silco/__init__.py")
+          init_py.write_text(
+              re.sub(
+                  r'^__version__ = "[^"]+"$',
+                  f'__version__ = "{version}"',
+                  init_py.read_text(),
+                  count=1,
+                  flags=re.M,
+              )
+          )
+          PY
+
+          echo "Building silco version ${VERSION}"
 
       - name: Build distributions
         run: python -m build
@@ -54,3 +106,5 @@ jobs:
 
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
